@@ -15,7 +15,7 @@ app.use(express.json());
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-// 🔒 SAFE BASE DIRECTORY (only this folder allowed)
+// 🔒 SAFE BASE DIRECTORY
 const BASE_DIR = path.join(__dirname, "safe-files");
 
 // MCP Server
@@ -54,7 +54,6 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
 function getSafePath(userPath) {
     const resolvedPath = path.resolve(BASE_DIR, userPath);
 
-    // ❗ prevent going outside BASE_DIR
     if (!resolvedPath.startsWith(BASE_DIR)) {
         throw new Error("Access denied");
     }
@@ -69,7 +68,6 @@ server.setRequestHandler(CallToolRequestSchema, async (req) => {
 
         if (name === "read_file") {
             const safePath = getSafePath(args.path);
-
             const content = await readFile(safePath, "utf-8");
 
             return {
@@ -92,7 +90,7 @@ server.setRequestHandler(CallToolRequestSchema, async (req) => {
     }
 });
 
-// 🌐 HTTP endpoint
+// 🌐 MCP endpoint
 app.post("/mcp", async (req, res) => {
     try {
         const response = await server.handleRequest(req.body);
@@ -102,7 +100,12 @@ app.post("/mcp", async (req, res) => {
     }
 });
 
-// health check
+// 🟢 Health check endpoint (NEW)
+app.get("/healthz", (req, res) => {
+    res.status(200).send("OK");
+});
+
+// root endpoint
 app.get("/", (req, res) => {
     res.send("MCP Server Running");
 });
